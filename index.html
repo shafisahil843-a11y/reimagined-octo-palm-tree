@@ -1,0 +1,486 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>Sahil & Saikah 💕</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; font-family:'Segoe UI',sans-serif; -webkit-tap-highlight-color:transparent; }
+  body { overflow:hidden; height:100vh; background:#0a0a1a; color:#fff; user-select: none; }
+
+  /* ---------- UPLOAD SCREEN ---------- */
+  #upload-screen {
+    height:100vh; display:flex; flex-direction:column;
+    align-items:center; justify-content:center; text-align:center;
+    background:radial-gradient(circle at 30% 20%, #3a1c4a, #0a0a1a 70%);
+    padding:20px; position: fixed; inset: 0; z-index: 100;
+  }
+  #upload-screen h1 {
+    font-size:2.4rem; margin-bottom:10px;
+    background:linear-gradient(90deg,#ff5e9c,#ffb86c);
+    -webkit-background-clip:text; background-clip:text; color:transparent;
+  }
+  #upload-screen p { color:#ccc; margin-bottom:30px; font-size:1rem; }
+  .upload-btn {
+    padding:16px 36px; border-radius:50px; cursor:pointer;
+    background:linear-gradient(90deg,#ff5e9c,#a855f7);
+    font-size:1.1rem; font-weight:600; transition:.3s;
+    box-shadow:0 8px 24px rgba(255,94,156,.4); display: inline-block;
+  }
+  .upload-btn:hover { transform:translateY(-3px); }
+  #startBtn {
+    margin-top:20px; padding:14px 40px; border:none; border-radius:50px;
+    background:linear-gradient(90deg,#22c55e,#16a34a); color:#fff;
+    font-size:1rem; font-weight:700; cursor:pointer; opacity:0; pointer-events:none;
+    transition:.3s;
+  }
+  #startBtn.show { opacity:1; pointer-events:auto; }
+  #preview { margin-top:20px; max-width:200px; border-radius:12px; display:none; object-fit: cover; }
+
+  /* ---------- GAME SCREEN ---------- */
+  #game-screen { display:none; height:100vh; position:relative; overflow:hidden; }
+  
+  #bg-layer {
+    position:absolute; inset:0; background-size:cover;
+    background-position:center; filter:brightness(.6) saturate(1.1);
+    transition:.6s;
+  }
+  #bg-layer::after {
+    content:''; position:absolute; inset:0;
+    background:linear-gradient(to bottom, rgba(0,0,0,.2), rgba(0,0,0,.7));
+  }
+
+  /* Characters Setup */
+  .char-container {
+    position: absolute; bottom: 15%; display: flex; flex-direction: column;
+    align-items: center; transition: all .4s ease; z-index: 5;
+  }
+  #boy-container { left: 5%; }
+  #girl-container { right: 5%; }
+  
+  .char-container.inactive { opacity: .5; filter: brightness(0.6); transform: scale(0.95); }
+  .char-container.active { opacity: 1; filter: brightness(1); transform: scale(1.05); }
+
+  .char { height: 35vh; max-height: 300px; filter: drop-shadow(0 8px 20px rgba(0,0,0,.6)); }
+
+  /* Name Tags */
+  .name-tag {
+    margin-top: 10px; background: rgba(0,0,0,0.7); color: #fff;
+    padding: 5px 20px; border-radius: 20px; font-size: 1rem; font-weight: bold;
+    border: 1px solid rgba(255,255,255,0.3); backdrop-filter: blur(5px);
+  }
+  #boy-name { border-color: #4a90e2; color: #5eb0ff; }
+  #girl-name { border-color: #ff7eb6; color: #ff7eb6; }
+
+  /* Speech Bubbles (Messages above heads) */
+  .speech-bubble {
+    position: absolute; top: -60px; background: rgba(20, 10, 30, 0.95);
+    border: 2px solid #ff7eb6; border-radius: 15px; padding: 12px 18px;
+    font-size: 1rem; color: #fff; width: max-content; max-width: 180px;
+    text-align: center; display: none; z-index: 10; line-height: 1.4;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.5);
+  }
+  .speech-bubble::after {
+    content: ''; position: absolute; bottom: -10px; left: 50%; transform: translateX(-50%);
+    border-width: 10px 10px 0; border-style: solid; border-color: rgba(20, 10, 30, 0.95) transparent transparent transparent;
+  }
+  #boy-bubble { border-color: #4a90e2; }
+  #boy-bubble::after { border-color: rgba(20, 10, 30, 0.95) transparent transparent transparent; }
+
+  /* Narrator Box (Neeche ka box) */
+  #narrator-box {
+    position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%);
+    width: 90%; max-width: 500px; background: rgba(20,10,30,.9);
+    border: 2px solid #c4a3ff; border-radius: 15px; padding: 15px;
+    font-size: 1rem; text-align: center; color: #c4a3ff; font-style: italic;
+    display: none; z-index: 20; box-shadow: 0 10px 30px rgba(0,0,0,.6); line-height: 1.5;
+  }
+
+  /* Choices / Options */
+  #choices {
+    position:absolute; bottom: 100px; left:50%; transform:translateX(-50%);
+    width:90%; max-width: 400px; display:flex; flex-direction:column;
+    gap:12px; z-index: 25;
+  }
+  .choice-btn {
+    padding:15px 20px; border:none; border-radius:12px; cursor:pointer;
+    background:linear-gradient(135deg, rgba(255,94,156,.95), rgba(168,85,247,.95));
+    color:#fff; font-size:1rem; font-weight:600; transition:.2s;
+    box-shadow:0 6px 20px rgba(255,94,156,.4);
+  }
+  .choice-btn:active { transform:scale(0.98); }
+
+  /* Love Meter */
+  #love-meter {
+    position:absolute; top:20px; right:20px; background:rgba(0,0,0,.7);
+    padding:10px 20px; border-radius:50px; font-size:1rem; z-index:30;
+    border:1.5px solid rgba(255,126,182,.6); backdrop-filter:blur(8px);
+    font-weight: bold;
+  }
+  #loveVal { color:#ff7eb6; }
+
+  /* Tap to continue hint */
+  #tap-hint {
+    position: absolute; top: 20px; left: 20px; color: rgba(255,255,255,0.5);
+    font-size: 0.8rem; z-index: 30; display: none;
+  }
+
+  /* Ending Screen */
+  #ending-screen {
+    display:none; position:absolute; inset:0; z-index:50;
+    background:rgba(10,5,20,.95); backdrop-filter:blur(10px);
+    flex-direction:column; align-items:center; justify-content:center;
+    text-align:center; padding:30px;
+  }
+  #ending-screen h1 { font-size:2.2rem; margin-bottom:15px; }
+  #ending-screen p { color:#ccc; max-width:500px; margin-bottom:25px; line-height:1.7; font-size: 1.1rem; }
+  #ending-screen button {
+    padding:14px 40px; border:none; border-radius:50px; cursor:pointer;
+    background:linear-gradient(90deg,#ff5e9c,#a855f7); color:#fff;
+    font-size:1rem; font-weight:700;
+  }
+
+  /* Floating hearts */
+  .heart {
+    position:fixed; font-size:1.5rem; pointer-events:none; z-index:40;
+    animation:floatUp 3s ease-out forwards;
+  }
+  @keyframes floatUp {
+    0% { opacity:1; transform:translateY(0) scale(1); }
+    100% { opacity:0; transform:translateY(-300px) scale(1.5); }
+  }
+
+  /* Mobile Adjustments */
+  @media (max-width:600px) {
+    .char { height: 30vh; }
+    .speech-bubble { top: -50px; font-size: 0.9rem; padding: 10px 14px; max-width: 150px; }
+    #boy-container { left: 2%; }
+    #girl-container { right: 2%; }
+    #choices { bottom: 80px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- UPLOAD SCREEN -->
+<div id="upload-screen">
+  <h1>Sahil & Saikah 💕</h1>
+  <p>Photo daalo... aur kahani shuru karo</p>
+  <label class="upload-btn">
+    📸 Photo Chuno
+    <input type="file" id="bgUpload" accept="image/*" hidden>
+  </label>
+  <img id="preview" alt="preview">
+  <button id="startBtn">Shuru Karo →</button>
+</div>
+
+<!-- GAME SCREEN -->
+<div id="game-screen">
+  <div id="bg-layer"></div>
+  <div id="tap-hint">Screen pe tap karein aage badhne ke liye</div>
+
+  <div id="love-meter">💖 <span id="loveVal">0</span></div>
+
+  <!-- Sahil (Boy) -->
+  <div id="boy-container" class="char-container">
+    <div id="boy-bubble" class="speech-bubble"></div>
+    <svg class="char" viewBox="0 0 120 260" xmlns="http://www.w3.org/2000/svg">
+      <ellipse cx="60" cy="255" rx="35" ry="6" fill="#000" opacity=".4"/>
+      <rect x="42" y="180" width="14" height="70" rx="6" fill="#1f2937"/>
+      <rect x="64" y="180" width="14" height="70" rx="6" fill="#1f2937"/>
+      <rect x="42" y="245" width="18" height="12" rx="4" fill="#111"/>
+      <rect x="60" y="245" width="18" height="12" rx="4" fill="#111"/>
+      <rect x="32" y="100" width="56" height="90" rx="14" fill="#4a90e2"/>
+      <rect x="24" y="105" width="14" height="70" rx="7" fill="#4a90e2"/>
+      <rect x="82" y="105" width="14" height="70" rx="7" fill="#4a90e2"/>
+      <circle cx="31" cy="178" r="7" fill="#fdbcb4"/>
+      <circle cx="89" cy="178" r="7" fill="#fdbcb4"/>
+      <circle cx="60" cy="55" r="32" fill="#fdbcb4"/>
+      <path d="M28 45 Q35 15 60 12 Q85 15 92 45 Q88 30 60 28 Q32 30 28 45 Z" fill="#2d1b0e"/>
+      <circle cx="49" cy="55" r="3" fill="#111"/>
+      <circle cx="71" cy="55" r="3" fill="#111"/>
+      <path d="M50 68 Q60 76 70 68" stroke="#c14b3b" stroke-width="2" fill="none" stroke-linecap="round"/>
+    </svg>
+    <div id="boy-name" class="name-tag">Sahil</div>
+  </div>
+
+  <!-- Saikah (Girl) -->
+  <div id="girl-container" class="char-container">
+    <div id="girl-bubble" class="speech-bubble"></div>
+    <svg class="char" viewBox="0 0 120 260" xmlns="http://www.w3.org/2000/svg">
+      <ellipse cx="60" cy="255" rx="35" ry="6" fill="#000" opacity=".4"/>
+      <rect x="44" y="185" width="12" height="60" rx="5" fill="#fdbcb4"/>
+      <rect x="64" y="185" width="12" height="60" rx="5" fill="#fdbcb4"/>
+      <rect x="42" y="240" width="16" height="12" rx="4" fill="#ff7eb6"/>
+      <rect x="62" y="240" width="16" height="12" rx="4" fill="#ff7eb6"/>
+      <path d="M35 105 Q30 180 40 195 L80 195 Q90 180 85 105 Z" fill="#ff7eb6"/>
+      <rect x="26" y="105" width="12" height="65" rx="6" fill="#fdbcb4"/>
+      <rect x="82" y="105" width="12" height="65" rx="6" fill="#fdbcb4"/>
+      <circle cx="60" cy="55" r="30" fill="#fdbcb4"/>
+      <path d="M30 55 Q28 20 60 15 Q92 20 90 55 Q88 35 60 32 Q32 35 30 55 Z" fill="#5a2e1a"/>
+      <path d="M30 55 Q26 90 34 100 Q38 70 32 55 Z" fill="#5a2e1a"/>
+      <path d="M90 55 Q94 90 86 100 Q82 70 88 55 Z" fill="#5a2e1a"/>
+      <circle cx="50" cy="55" r="3" fill="#111"/>
+      <circle cx="70" cy="55" r="3" fill="#111"/>
+      <path d="M52 68 Q60 74 68 68" stroke="#c14b3b" stroke-width="2" fill="none" stroke-linecap="round"/>
+      <circle cx="43" cy="65" r="4" fill="#ff8aa8" opacity=".7"/>
+      <circle cx="77" cy="65" r="4" fill="#ff8aa8" opacity=".7"/>
+    </svg>
+    <div id="girl-name" class="name-tag">Saikah</div>
+  </div>
+
+  <!-- Narrator Text Box (Neeche) -->
+  <div id="narrator-box"></div>
+
+  <!-- Options (Neeche) -->
+  <div id="choices"></div>
+
+  <!-- Ending -->
+  <div id="ending-screen">
+    <h1 id="endTitle"></h1>
+    <p id="endText"></p>
+    <button onclick="location.reload()">Phir Se Khelo 🔁</button>
+  </div>
+</div>
+
+<script>
+const scenes = {
+  meeting: {
+    lines: [
+      { who:'narrator', text:'Woh din... jab tumne unhe phir se dekha. Dil ek pal ke liye ruk gaya.' },
+      { who:'boy',      text:'Tum? Yahan? 😳' },
+      { who:'girl',     text:'Haan... tum bhi? *muskura ke*' },
+      { who:'narrator', text:'Ek pal ko laga jaise poori duniya ruk gayi.' }
+    ],
+    choices: [
+      { text:'Tumhe bahut miss kiya 💕', love:15, next:'walk' },
+      { text:'Bas yun hi ghoom raha tha 🙂', love:5, next:'walk' }
+    ]
+  },
+  walk: {
+    lines: [
+      { who:'boy',      text:'Chalo, thodi der saath chalte hain?' },
+      { who:'girl',     text:'*nazar jhuka ke* Chalo...' },
+      { who:'narrator', text:'Tum dono chal pade. Woh pal... jaise waqt ruk gaya.' },
+      { who:'boy',      text:'Tumhari yaad bahut aati thi... har roz, har pal.' },
+      { who:'girl',     text:'*aankhon mein nami* Mujhe bhi... 🥺' }
+    ],
+    choices: [
+      { text:'Uska haath pakad lo 💖', love:15, next:'confession' },
+      { text:'Bas saath saath chalo 🚶', love:5, next:'confession' }
+    ]
+  },
+  confession: {
+    lines: [
+      { who:'narrator', text:'Suraj dhalne laga. Aasman gulabi ho gaya. Woh pal jaadu jaisa tha.' },
+      { who:'boy',      text:'Kuch kehna hai mujhe... bahut dinon se.' },
+      { who:'girl',     text:'Bolo na Sahil... main sun rahi hoon.' },
+      { who:'narrator', text:'Dil zor zor se dhadak raha tha...' }
+    ],
+    choices: [
+      { text:'Tumse pyaar hai Saikah 💕', love:20, next:'end' },
+      { text:'Tumhari yaad bahut aati hai 🥺', love:15, next:'end' }
+    ]
+  }
+};
+
+let loveMeter = 0;
+let currentScene = 'meeting';
+let lineIndex = 0;
+let typing = false;
+let typeTimer = null;
+
+const $ = id => document.getElementById(id);
+
+// PHOTO UPLOAD
+$('bgUpload').addEventListener('change', e => {
+  const file = e.target.files[0];
+  if (!file || !file.type.startsWith('image/')) return;
+
+  const reader = new FileReader();
+  reader.onload = ev => {
+    const dataUrl = ev.target.result;
+    $('preview').src = dataUrl;
+    $('preview').style.display = 'block';
+    $('bg-layer').style.backgroundImage = `url(${dataUrl})`;
+    $('startBtn').classList.add('show');
+  };
+  reader.readAsDataURL(file);
+});
+
+// START GAME
+$('startBtn').addEventListener('click', () => {
+  $('upload-screen').style.display = 'none';
+  $('game-screen').style.display = 'block';
+  setTimeout(() => { $('tap-hint').style.display = 'block'; }, 2000);
+  playScene('meeting');
+});
+
+function playScene(name) {
+  currentScene = name;
+  lineIndex = 0;
+  $('choices').innerHTML = '';
+  nextLine();
+}
+
+function nextLine() {
+  const scene = scenes[currentScene];
+  if (!scene) return;
+
+  if (lineIndex >= scene.lines.length) {
+    showChoices(scene.choices);
+    return;
+  }
+
+  const line = scene.lines[lineIndex];
+  showLine(line);
+  lineIndex++;
+}
+
+function showLine(line) {
+  const boyBubble = $('boy-bubble');
+  const girlBubble = $('girl-bubble');
+  const narratorBox = $('narrator-box');
+  
+  const boyContainer = $('boy-container');
+  const girlContainer = $('girl-container');
+
+  // Hide all messages first
+  boyBubble.style.display = 'none';
+  girlBubble.style.display = 'none';
+  narratorBox.style.display = 'none';
+
+  // Reset character highlights
+  boyContainer.classList.remove('active', 'inactive');
+  girlContainer.classList.remove('active', 'inactive');
+
+  if (line.who === 'boy') {
+    boyBubble.style.display = 'block';
+    boyContainer.classList.add('active');
+    girlContainer.classList.add('inactive');
+    typeText(boyBubble, line.text);
+  } else if (line.who === 'girl') {
+    girlBubble.style.display = 'block';
+    girlContainer.classList.add('active');
+    boyContainer.classList.add('inactive');
+    typeText(girlBubble, line.text);
+  } else {
+    narratorBox.style.display = 'block';
+    typeText(narratorBox, line.text);
+  }
+}
+
+function typeText(el, text, speed = 30) {
+  clearInterval(typeTimer);
+  typing = true;
+  el.textContent = '';
+  let i = 0;
+  typeTimer = setInterval(() => {
+    el.textContent += text[i++];
+    if (i >= text.length) {
+      clearInterval(typeTimer);
+      typing = false;
+    }
+  }, speed);
+
+  el.dataset.full = text;
+}
+
+// Tap anywhere on screen to continue (Best for mobile)
+$('game-screen').addEventListener('click', (e) => {
+  // Agar choice button click hua hai toh ignore karo
+  if (e.target.classList.contains('choice-btn')) return;
+  // Agar ending screen khuli hai toh ignore karo
+  if ($('ending-screen').style.display === 'flex') return;
+  // Agar choices dikh rahi hain toh ignore karo
+  if ($('choices').children.length > 0) return;
+
+  handleNext();
+});
+
+function handleNext() {
+  if (typing) {
+    clearInterval(typeTimer);
+    const activeBubble = $('boy-bubble').style.display === 'block' ? $('boy-bubble') : 
+                         ($('girl-bubble').style.display === 'block' ? $('girl-bubble') : $('narrator-box'));
+    activeBubble.textContent = activeBubble.dataset.full || '';
+    typing = false;
+    return;
+  }
+  nextLine();
+}
+
+function showChoices(choices) {
+  if (!choices) return;
+  const box = $('choices');
+  box.innerHTML = '';
+  
+  // Hide bubbles/narrator while showing choices
+  $('boy-bubble').style.display = 'none';
+  $('girl-bubble').style.display = 'none';
+  $('narrator-box').style.display = 'none';
+  $('boy-container').classList.remove('active', 'inactive');
+  $('girl-container').classList.remove('active', 'inactive');
+
+  choices.forEach(c => {
+    const btn = document.createElement('button');
+    btn.className = 'choice-btn';
+    btn.textContent = c.text;
+    btn.onclick = (e) => {
+      e.stopPropagation();
+      loveMeter += c.love;
+      $('loveVal').textContent = loveMeter;
+      box.innerHTML = '';
+      spawnHearts(4);
+
+      if (c.next === 'end') {
+        showEnding();
+      } else {
+        playScene(c.next);
+      }
+    };
+    box.appendChild(btn);
+  });
+}
+
+function showEnding() {
+  let title, text, color;
+
+  if (loveMeter >= 45) {
+    title = '💕 Happily Ever After';
+    text = 'Sahil aur Saikah ne ek doosre ka haath thaam liya. Us din ke baad... har pal saath bitaya. Woh yaad... ab hamesha ke liye unki kahani ban gayi. ❤️';
+    color = '#ff7eb6';
+  } else if (loveMeter >= 30) {
+    title = '🌸 Sweet Ending';
+    text = 'Sahil ne dil ki baat keh di... aur Saikah muskura di. Shayad yeh shuruaat thi ek khoobsurat safar ki. Waqt lega, par yaad rahegi. 💖';
+    color = '#ffb86c';
+  } else {
+    title = '💔 Chup Si Kahani';
+    text = 'Sahil ne sab kuch andar hi rakha. Saikah chali gayi... aur sirf yaadein reh gayi. Par koi baat nahi — woh yaad hamesha rahegi.';
+    color = '#8b9dc3';
+  }
+
+  $('endTitle').textContent = title;
+  $('endTitle').style.color = color;
+  $('endText').textContent = text;
+  $('ending-screen').style.display = 'flex';
+  spawnHearts(15);
+}
+
+function spawnHearts(count) {
+  for (let i = 0; i < count; i++) {
+    setTimeout(() => {
+      const h = document.createElement('div');
+      h.className = 'heart';
+      h.textContent = ['💖','💕','❤️','💗','💘'][Math.floor(Math.random()*5)];
+      h.style.left = (20 + Math.random() * 60) + 'vw';
+      h.style.top = (40 + Math.random() * 40) + 'vh';
+      h.style.fontSize = (1 + Math.random() * 1.5) + 'rem';
+      document.body.appendChild(h);
+      setTimeout(() => h.remove(), 3000);
+    }, i * 120);
+  }
+}
+</script>
+</body>
+</html>
